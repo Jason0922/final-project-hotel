@@ -10,7 +10,7 @@
                     <i class="fas fa-dollar-sign"></i> Total Revenue
                 </h5>
                 <h2 class="card-text">${{ "{:,.2f}".format(total_revenue) }}</h2>
-                <small>Last 12 months</small>
+                <small>All time</small>
             </div>
         </div>
     </div>
@@ -20,8 +20,8 @@
                 <h5 class="card-title">
                     <i class="fas fa-bed"></i> Average Occupancy
                 </h5>
-                <h2 class="card-text">{{ "{:.1f}".format(avg_occupancy) }}%</h2>
-                <small>Last 12 months</small>
+                <h2 class="card-text">{{ "{:.1f}".format(avg_occupancy_monthly) }}%</h2>
+                <small>Monthly average</small>
             </div>
         </div>
     </div>
@@ -29,64 +29,68 @@
         <div class="card text-white bg-info">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="fas fa-users"></i> Top Customers
+                    <i class="fas fa-users"></i> Active Customers
                 </h5>
                 <h2 class="card-text">{{ unique_customers_count }}</h2>
-                <small>Active customers</small>
+                <small>With reservations</small>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Charts Row 1 -->
+<!-- Charts Row 1: Revenue -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5><i class="fas fa-chart-bar"></i> Quarterly Revenue Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="quarterlyRevenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2: Occupancy -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5><i class="fas fa-chart-line"></i> Monthly Occupancy Rate</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyOccupancyChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 3: Events & F&B -->
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="card">
             <div class="card-header bg-dark text-white">
-                <h5><i class="fas fa-chart-line"></i> Monthly Revenue Trend</h5>
+                <h5><i class="fas fa-chart-bar"></i> Event Count by Month</h5>
             </div>
             <div class="card-body">
-                <canvas id="revenueChart"></canvas>
+                <canvas id="eventCountChart"></canvas>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card">
             <div class="card-header bg-dark text-white">
-                <h5><i class="fas fa-chart-area"></i> Occupancy Rate Trend</h5>
+                <h5><i class="fas fa-chart-pie"></i> F&B Revenue by Meal Type</h5>
             </div>
             <div class="card-body">
-                <canvas id="occupancyChart"></canvas>
+                <canvas id="fbRevenueChart"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Charts Row 2 -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5><i class="fas fa-chart-pie"></i> Revenue by Service Type</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="serviceChart"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5><i class="fas fa-chart-bar"></i> Seasonal Revenue Analysis</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="seasonalChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Tables Row 1 -->
+<!-- Tables Row 1: Customers -->
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="card">
@@ -105,10 +109,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for customer in top_customers %}
+                            {% for customer in top_customers[:10] %}
                             <tr>
                                 <td><strong>{{ customer.customer_name }}</strong></td>
-                                <td><span class="badge bg-secondary">{{ customer.party_type }}</span></td>
+                                <td>{{ customer.party_type }}</td>
                                 <td class="text-success"><strong>${{ "{:,.2f}".format(customer.total_revenue) }}</strong></td>
                                 <td>{{ customer.total_reservations }}</td>
                             </tr>
@@ -116,293 +120,213 @@
                         </tbody>
                     </table>
                 </div>
+                <a href="{{ url_for('top_customers_detail') }}" class="btn btn-sm btn-primary mt-2">View All</a>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5><i class="fas fa-door-open"></i> Most Booked Rooms</h5>
+            <div class="card-header bg-danger text-white">
+                <h5><i class="fas fa-exclamation-triangle"></i> High-Risk Customers</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table table-striped table-hover">
                         <thead class="table-dark sticky-top">
                             <tr>
-                                <th>Room</th>
-                                <th>Building</th>
-                                <th>Bookings</th>
-                                <th>Revenue</th>
+                                <th>Customer</th>
+                                <th>Risk Score</th>
+                                <th>Payment Score</th>
+                                <th>Past History</th>
+                                <th>Overdue</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for room in top_rooms %}
+                            {% for customer in high_risk_customers[:10] %}
                             <tr>
-                                <td><strong>{{ room.room_number }}</strong></td>
-                                <td>{{ room.building_name }}</td>
-                                <td>{{ room.total_bookings }}</td>
-                                <td class="text-success"><strong>${{ "{:,.2f}".format(room.total_revenue_generated) }}</strong></td>
+                                <td><strong>{{ customer.customer_name }}</strong></td>
+                                <td><span class="badge bg-danger">{{ "{:.1f}".format(customer.risk_score) }}</span></td>
+                                <td><span class="badge bg-warning">{{ customer.payment_promptness_score }}</span></td>
+                                <td><span class="badge bg-info">{{ customer.past_history_score }}</span></td>
+                                <td class="text-danger">${{ "{:,.2f}".format(customer.overdue_amount) }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                <a href="{{ url_for('high_risk_customers_detail') }}" class="btn btn-sm btn-danger mt-2">View All</a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Tables Row 2 -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5><i class="fas fa-calendar-check"></i> Event Performance</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark sticky-top">
-                            <tr>
-                                <th>Event</th>
-                                <th>Host</th>
-                                <th>Rooms</th>
-                                <th>Revenue</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for event in event_performance %}
-                            <tr>
-                                <td><strong>{{ event.event_name }}</strong></td>
-                                <td>{{ event.host_organization }}</td>
-                                <td>{{ event.rooms_used }}</td>
-                                <td class="text-success"><strong>${{ "{:,.2f}".format(event.total_event_revenue) }}</strong></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5><i class="fas fa-user-friends"></i> Customer Retention</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark sticky-top">
-                            <tr>
-                                <th>Guest</th>
-                                <th>Visits</th>
-                                <th>Total Nights</th>
-                                <th>Avg/Visit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for customer in customer_retention %}
-                            <tr>
-                                <td><strong>{{ customer.guest_name }}</strong></td>
-                                <td>{{ customer.total_visits }}</td>
-                                <td>{{ customer.total_nights }}</td>
-                                <td>{{ "{:.1f}".format(customer.avg_nights_per_visit) }} nights</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
+<!-- Scripts for Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-// Revenue Chart
-const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-const revenueChart = new Chart(revenueCtx, {
-    type: 'line',
-    data: {
-        labels: {{ monthly_revenue|map(attribute='month')|list|tojson }},
-        datasets: [{
-            label: 'Revenue ($)',
-            data: {{ monthly_revenue|map(attribute='total_revenue')|list|tojson }},
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'top'
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        return 'Revenue: $' + context.parsed.y.toLocaleString();
-                    }
-                }
-            }
+    // Quarterly Revenue Chart
+    const quarterlyCtx = document.getElementById('quarterlyRevenueChart').getContext('2d');
+    new Chart(quarterlyCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ quarterly_revenue|map(attribute='quarter')|list|tojson }},
+            datasets: [{
+                label: 'Revenue ($)',
+                data: {{ quarterly_revenue|map(attribute='total_revenue')|list|tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return '$' + value.toLocaleString();
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
                     }
                 }
             }
         }
-    }
-});
+    });
 
-// Occupancy Chart
-const occupancyCtx = document.getElementById('occupancyChart').getContext('2d');
-const occupancyChart = new Chart(occupancyCtx, {
-    type: 'line',
-    data: {
-        labels: {{ occupancy_rate|map(attribute='month')|list|tojson }},
-        datasets: [{
-            label: 'Occupancy Rate (%)',
-            data: {{ occupancy_rate|map(attribute='occupancy_rate')|list|tojson }},
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'top'
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        return 'Occupancy: ' + context.parsed.y.toFixed(1) + '%';
-                    }
-                }
-            }
+    // Monthly Occupancy Chart
+    const monthlyOccupancyCtx = document.getElementById('monthlyOccupancyChart').getContext('2d');
+    new Chart(monthlyOccupancyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ occupancy_monthly|map(attribute='month')|list|tojson }},
+            datasets: [{
+                label: 'Occupancy Rate (%)',
+                data: {{ occupancy_monthly|map(attribute='occupancy_rate')|list|tojson }},
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 2,
+                pointRadius: 5,
+                pointBackgroundColor: 'rgb(75, 192, 192)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 7,
+                pointHoverBackgroundColor: 'rgb(75, 192, 192)',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                    callback: function(value) {
-                        return value + '%';
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 12
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return 'Occupancy: ' + context.parsed.y.toFixed(1) + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        stepSize: 10,
+                        font: {
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return value + '%';
+                        }
                     }
                 }
             }
         }
-    }
-});
+    });
 
-// Service Revenue Chart
-const serviceCtx = document.getElementById('serviceChart').getContext('2d');
-const serviceChart = new Chart(serviceCtx, {
-    type: 'pie',
-    data: {
-        labels: {{ service_revenue|map(attribute='service_name')|list|tojson }},
-        datasets: [{
-            data: {{ service_revenue|map(attribute='total_revenue')|list|tojson }},
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.8)',
-                'rgba(54, 162, 235, 0.8)',
-                'rgba(255, 206, 86, 0.8)',
-                'rgba(75, 192, 192, 0.8)',
-                'rgba(153, 102, 255, 0.8)',
-                'rgba(255, 159, 64, 0.8)'
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
-            ],
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                position: 'right'
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        const label = context.label || '';
-                        const value = context.parsed || 0;
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
-                    }
-                }
-            }
-        }
-    }
-});
-
-// Seasonal Revenue Chart
-const seasonalCtx = document.getElementById('seasonalChart').getContext('2d');
-const seasonalChart = new Chart(seasonalCtx, {
-    type: 'bar',
-    data: {
-        labels: {{ seasonal_revenue|map(attribute='season')|list|tojson }},
-        datasets: [{
-            label: 'Revenue ($)',
-            data: {{ seasonal_revenue|map(attribute='total_revenue')|list|tojson }},
-            backgroundColor: 'rgba(54, 162, 235, 0.8)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'top'
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        return 'Revenue: $' + context.parsed.y.toLocaleString();
-                    }
-                }
-            }
+    // Event Count by Month Chart
+    const eventCountCtx = document.getElementById('eventCountChart').getContext('2d');
+    new Chart(eventCountCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ event_count_by_month|map(attribute='month')|list|tojson }},
+            datasets: [{
+                label: 'Number of Events',
+                data: {{ event_count_by_month|map(attribute='total_events')|list|tojson }},
+                backgroundColor: 'rgba(153, 102, 255, 0.8)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return '$' + value.toLocaleString();
-                    }
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
         }
-    }
-});
+    });
+
+    // F&B Revenue by Meal Type Chart
+    const fbRevenueCtx = document.getElementById('fbRevenueChart').getContext('2d');
+    new Chart(fbRevenueCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ fb_revenue_by_meal|map(attribute='meal_type')|map('title')|list|tojson }},
+            datasets: [{
+                label: 'Revenue ($)',
+                data: {{ fb_revenue_by_meal|map(attribute='total_revenue')|list|tojson }},
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
 </script>
 {% endblock %}
-
-
-

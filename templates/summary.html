@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Monitoring Data Summary - Last Resort Hotels{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-list"></i> Monitoring Data Summary</h2>
+        <p class="text-muted">Overview of all available monitoring datasets and metrics</p>
+    </div>
+</div>
+
+<!-- Total Revenue Metrics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-dollar-sign"></i> Total Revenue Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-dollar-sign"></i> Total Revenue</h6>
+                                <p class="card-text">
+                                    <strong>Total Revenue:</strong> ${{ "{:,.2f}".format(total_revenue) }}<br>
+                                    <strong>Quarters Tracked:</strong> {{ quarterly_revenue|length }}<br>
+                                    <strong>Latest Quarter:</strong> {{ quarterly_revenue[-1].quarter if quarterly_revenue else 'N/A' }}<br>
+                                    <strong>Latest Quarter Revenue:</strong> ${{ "{:,.2f}".format(quarterly_revenue[-1].total_revenue) if quarterly_revenue else 0 }}
+                                </p>
+                                <a href="{{ url_for('total_revenue_detail') }}" class="btn btn-sm btn-primary">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-chart-bar"></i> Quarterly Revenue Analysis</h6>
+                                <p class="card-text">
+                                    <strong>Quarters Tracked:</strong> {{ quarterly_revenue|length }}<br>
+                                    <strong>Total Quarterly Revenue:</strong> ${{ "{:,.2f}".format(quarterly_revenue|map(attribute='total_revenue')|sum) }}<br>
+                                    <strong>Best Quarter:</strong> {{ (quarterly_revenue|sort(attribute='total_revenue', reverse=True)|first).quarter if quarterly_revenue else 'N/A' }}<br>
+                                    <strong>Best Quarter Revenue:</strong> ${{ "{:,.2f}".format((quarterly_revenue|sort(attribute='total_revenue', reverse=True)|first).total_revenue) if quarterly_revenue else 0 }}
+                                </p>
+                                <a href="{{ url_for('quarterly_revenue_detail') }}" class="btn btn-sm btn-info">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Occupancy & Reservation Metrics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-bed"></i> Occupancy & Reservation Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-calendar-day"></i> Daily Occupancy Rate</h6>
+                                <p class="card-text">
+                                    <strong>Days Tracked:</strong> {{ occupancy_daily|length }}<br>
+                                    <strong>Latest Date:</strong> {{ occupancy_daily[0].date if occupancy_daily else 'N/A' }}<br>
+                                    <strong>Latest Occupancy:</strong> {{ "{:.1f}".format(occupancy_daily[0].occupancy_rate) if occupancy_daily else 0 }}%<br>
+                                    <strong>Total Stays (Latest):</strong> {{ occupancy_daily[0].total_stays if occupancy_daily else 0 }}
+                                </p>
+                                <a href="{{ url_for('occupancy_daily_detail') }}" class="btn btn-sm btn-success">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-calendar-alt"></i> Monthly Occupancy Rate</h6>
+                                <p class="card-text">
+                                    <strong>Average Occupancy:</strong> {{ "{:.1f}".format(avg_occupancy_monthly) }}%<br>
+                                    <strong>Months Tracked:</strong> {{ occupancy_monthly|length }}<br>
+                                    <strong>Latest Month:</strong> {{ occupancy_monthly[-1].month if occupancy_monthly else 'N/A' }}<br>
+                                    <strong>Latest Occupancy:</strong> {{ "{:.1f}".format(occupancy_monthly[-1].occupancy_rate) if occupancy_monthly else 0 }}%
+                                </p>
+                                <a href="{{ url_for('occupancy_monthly_detail') }}" class="btn btn-sm btn-success">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Quality & Behavior Metrics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-users"></i> Customer Quality & Behavior Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-star"></i> Top Revenue-Generating Customers</h6>
+                                <p class="card-text">
+                                    <strong>Total Customers:</strong> {{ unique_customers_count }}<br>
+                                    <strong>Top Customers Listed:</strong> {{ top_customers|length }}<br>
+                                    <strong>Top Customer Revenue:</strong> ${{ "{:,.2f}".format(top_customers[0].total_revenue) if top_customers else 0 }}<br>
+                                    <strong>Total Customer Revenue:</strong> ${{ "{:,.2f}".format(top_customers|map(attribute='total_revenue')|sum) }}
+                                </p>
+                                <a href="{{ url_for('top_customers_detail') }}" class="btn btn-sm btn-info">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-danger">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-exclamation-triangle"></i> High-Risk Customer List</h6>
+                                <p class="card-text">
+                                    <strong>High-Risk Customers:</strong> {{ high_risk_customers|length }}<br>
+                                    <strong>Requires Attention:</strong> Yes<br>
+                                    <strong>Lowest Score:</strong> {{ "{:.1f}".format((high_risk_customers|sort(attribute='overall_qualification_score')|first).overall_qualification_score) if high_risk_customers else 'N/A' }}<br>
+                                    <strong>Total Overdue:</strong> ${{ "{:,.2f}".format(high_risk_customers|map(attribute='overdue_amount')|sum) }}
+                                </p>
+                                <a href="{{ url_for('high_risk_customers_detail') }}" class="btn btn-sm btn-danger">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event & Facility Usage Metrics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5><i class="fas fa-calendar-check"></i> Event & Facility Usage Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-secondary">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-calendar-check"></i> Event Count by Month</h6>
+                                <p class="card-text">
+                                    <strong>Total Events:</strong> {{ event_count_by_month|map(attribute='total_events')|sum }}<br>
+                                    <strong>Months Tracked:</strong> {{ event_count_by_month|length }}<br>
+                                    <strong>Latest Month:</strong> {{ event_count_by_month[-1].month if event_count_by_month else 'N/A' }}<br>
+                                    <strong>Events This Month:</strong> {{ event_count_by_month[-1].total_events if event_count_by_month else 0 }}
+                                </p>
+                                <a href="{{ url_for('event_count_by_month_detail') }}" class="btn btn-sm btn-secondary">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-users"></i> Average Attendance</h6>
+                                <p class="card-text">
+                                    <strong>Total Events:</strong> {{ average_attendance.get('total_events', 0) }}<br>
+                                    <strong>Avg Estimated:</strong> {{ "{:.1f}".format(average_attendance.get('avg_estimated_attendance', 0)) }}<br>
+                                    <strong>Avg Actual:</strong> {{ "{:.1f}".format(average_attendance.get('avg_actual_attendance', 0)) }}<br>
+                                    <strong>Total Estimated:</strong> {{ average_attendance.get('total_estimated_attendance', 0) }}
+                                </p>
+                                <a href="{{ url_for('average_attendance_detail') }}" class="btn btn-sm btn-info">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Food, Retail & Upsell Metrics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-utensils"></i> Food, Retail & Upsell Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-utensils"></i> Average F&B Spend per Guest</h6>
+                                <p class="card-text">
+                                    <strong>Avg Spend per Guest:</strong> ${{ "{:,.2f}".format(avg_fb_spend.get('avg_fb_spend_per_guest', 0)) }}<br>
+                                    <strong>Total Guests with F&B:</strong> {{ avg_fb_spend.get('total_guests_with_fb', 0) }}<br>
+                                    <strong>Total Meal Charges:</strong> {{ avg_fb_spend.get('total_meal_charges', 0) }}<br>
+                                    <strong>Total F&B Revenue:</strong> ${{ "{:,.2f}".format(avg_fb_spend.get('total_fb_revenue', 0)) }}
+                                </p>
+                                <a href="{{ url_for('avg_fb_spend_detail') }}" class="btn btn-sm btn-success">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-chart-pie"></i> F&B Revenue by Meal Type</h6>
+                                <p class="card-text">
+                                    <strong>Meal Types:</strong> {{ fb_revenue_by_meal|length }}<br>
+                                    <strong>Total F&B Revenue:</strong> ${{ "{:,.2f}".format(fb_revenue_by_meal|map(attribute='total_revenue')|sum) }}<br>
+                                    <strong>Top Meal Type:</strong> {{ fb_revenue_by_meal[0].meal_type.title() if fb_revenue_by_meal else 'N/A' }}<br>
+                                    <strong>Top Revenue:</strong> ${{ "{:,.2f}".format(fb_revenue_by_meal[0].total_revenue) if fb_revenue_by_meal else 0 }}
+                                </p>
+                                <a href="{{ url_for('fb_revenue_by_meal_type_detail') }}" class="btn btn-sm btn-success">View Details & Graph</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-dollar-sign"></i> Total Revenue
+                </h5>
+                <h2 class="card-text">${{ "{:,.2f}".format(total_revenue) }}</h2>
+                <small>All time</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-bed"></i> Average Occupancy
+                </h5>
+                <h2 class="card-text">{{ "{:.1f}".format(avg_occupancy_monthly) }}%</h2>
+                <small>Monthly average</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-users"></i> Active Customers
+                </h5>
+                <h2 class="card-text">{{ unique_customers_count }}</h2>
+                <small>With reservations</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-lg btn-primary">
+            <i class="fas fa-chart-bar"></i> View Detailed Dashboard with Graphs
+        </a>
+    </div>
+</div>
+{% endblock %}
